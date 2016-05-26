@@ -9,10 +9,9 @@
 #import <Foundation/Foundation.h>
 
 #ifndef ALJSPatchFile
-#define ALExecuteJSPatch  [ALJSPatchFile executeJSPatch:@"13243"]
+#define ALExecuteJSPatch  [ALJSPatchFile executeJSPatch]
 #endif
 
 @interface ALJSPatchFile : NSObject
-//执行路径下的JS文件,secretCode是校对代码,保护程序安全性
-+ (void)executeJSPatch:(NSString *)secretCode;
++ (void)executeJSPatch;
 @end

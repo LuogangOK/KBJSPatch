@@ -16,6 +16,10 @@
 		DF6E6A6B1BCF788900F4D086 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DF6E6A6A1BCF788900F4D086 /* Images.xcassets */; };
 		DF6E6A6E1BCF788900F4D086 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = DF6E6A6C1BCF788900F4D086 /* LaunchScreen.xib */; };
 		DF6E6A7A1BCF788900F4D086 /* JSPatchDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = DF6E6A791BCF788900F4D086 /* JSPatchDemoTests.m */; };
+		DFB5A33D1CF6914900364B21 /* NSString+ALMD5.m in Sources */ = {isa = PBXBuildFile; fileRef = DFB5A33C1CF6914900364B21 /* NSString+ALMD5.m */; };
+		DFB5A3471CF698A500364B21 /* fixBug.js in Resources */ = {isa = PBXBuildFile; fileRef = DFB5A3431CF698A500364B21 /* fixBug.js */; };
+		DFB5A3481CF698A500364B21 /* JSPatch说明文档.pages in Resources */ = {isa = PBXBuildFile; fileRef = DFB5A3441CF698A500364B21 /* JSPatch说明文档.pages */; };
+		DFB5A3491CF698A500364B21 /* version.js in Resources */ = {isa = PBXBuildFile; fileRef = DFB5A3461CF698A500364B21 /* version.js */; };
 		DFBFC4561CEEFCC900672995 /* ALFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = DFBFC4451CEEFCC900672995 /* ALFileManager.m */; };
 		DFBFC4571CEEFCC900672995 /* ALJSPatchDownloadFile.m in Sources */ = {isa = PBXBuildFile; fileRef = DFBFC4471CEEFCC900672995 /* ALJSPatchDownloadFile.m */; };
 		DFBFC4581CEEFCC900672995 /* ALJSPatchFile.m in Sources */ = {isa = PBXBuildFile; fileRef = DFBFC4491CEEFCC900672995 /* ALJSPatchFile.m */; };
@@ -27,10 +31,7 @@
 		DFBFC4751CEEFE0800672995 /* rsaCert.crt in Resources */ = {isa = PBXBuildFile; fileRef = DFBFC46C1CEEFE0800672995 /* rsaCert.crt */; };
 		DFBFC4761CEEFE0800672995 /* rsaCertReq.csr in Resources */ = {isa = PBXBuildFile; fileRef = DFBFC46D1CEEFE0800672995 /* rsaCertReq.csr */; };
 		DFBFC4771CEEFE0800672995 /* RSAEncryptor.m in Sources */ = {isa = PBXBuildFile; fileRef = DFBFC46F1CEEFE0800672995 /* RSAEncryptor.m */; };
-		DFBFC47D1CF2B6FD00672995 /* fixBug.js in Resources */ = {isa = PBXBuildFile; fileRef = DFBFC47B1CF2B6FD00672995 /* fixBug.js */; };
-		DFBFC47E1CF2B6FE00672995 /* version.js in Resources */ = {isa = PBXBuildFile; fileRef = DFBFC47C1CF2B6FD00672995 /* version.js */; };
 		DFBFC4811CF2B7D000672995 /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = DFBFC47F1CF2B7D000672995 /* NSData+Base64.m */; };
-		DFBFC4831CF2F1B700672995 /* JSPatch说明文档.pages in Resources */ = {isa = PBXBuildFile; fileRef = DFBFC4821CF2F1B700672995 /* JSPatch说明文档.pages */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,11 @@
 		DF6E6A781BCF788900F4D086 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DF6E6A791BCF788900F4D086 /* JSPatchDemoTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JSPatchDemoTests.m; sourceTree = "<group>"; };
 		DF6E6A831BCF7A5C00F4D086 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
+		DFB5A33B1CF6914900364B21 /* NSString+ALMD5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+ALMD5.h"; sourceTree = "<group>"; };
+		DFB5A33C1CF6914900364B21 /* NSString+ALMD5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+ALMD5.m"; sourceTree = "<group>"; };
+		DFB5A3431CF698A500364B21 /* fixBug.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = fixBug.js; sourceTree = "<group>"; };
+		DFB5A3441CF698A500364B21 /* JSPatch说明文档.pages */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JSPatch说明文档.pages"; sourceTree = "<group>"; };
+		DFB5A3461CF698A500364B21 /* version.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = version.js; sourceTree = "<group>"; };
 		DFBFC4441CEEFCC900672995 /* ALFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALFileManager.h; sourceTree = "<group>"; };
 		DFBFC4451CEEFCC900672995 /* ALFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ALFileManager.m; sourceTree = "<group>"; };
 		DFBFC4461CEEFCC900672995 /* ALJSPatchDownloadFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALJSPatchDownloadFile.h; sourceTree = "<group>"; };
@@ -77,11 +83,8 @@
 		DFBFC46D1CEEFE0800672995 /* rsaCertReq.csr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = rsaCertReq.csr; sourceTree = "<group>"; };
 		DFBFC46E1CEEFE0800672995 /* RSAEncryptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RSAEncryptor.h; sourceTree = "<group>"; };
 		DFBFC46F1CEEFE0800672995 /* RSAEncryptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RSAEncryptor.m; sourceTree = "<group>"; };
-		DFBFC47B1CF2B6FD00672995 /* fixBug.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = fixBug.js; sourceTree = "<group>"; };
-		DFBFC47C1CF2B6FD00672995 /* version.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = version.js; sourceTree = "<group>"; };
 		DFBFC47F1CF2B7D000672995 /* NSData+Base64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Base64.m"; sourceTree = "<group>"; };
 		DFBFC4801CF2B7D000672995 /* NSData+Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Base64.h"; sourceTree = "<group>"; };
-		DFBFC4821CF2F1B700672995 /* JSPatch说明文档.pages */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JSPatch说明文档.pages"; sourceTree = "<group>"; };
 		E13AA5DABD02DA198C65EDD8 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -186,6 +189,24 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		DFB5A3421CF698A500364B21 /* debugFile */ = {
+			isa = PBXGroup;
+			children = (
+				DFB5A3431CF698A500364B21 /* fixBug.js */,
+				DFB5A3441CF698A500364B21 /* JSPatch说明文档.pages */,
+				DFB5A3451CF698A500364B21 /* uploadFile */,
+				DFB5A3461CF698A500364B21 /* version.js */,
+			);
+			path = debugFile;
+			sourceTree = "<group>";
+		};
+		DFB5A3451CF698A500364B21 /* uploadFile */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = uploadFile;
+			sourceTree = "<group>";
+		};
 		DFBFC4431CEEFCC900672995 /* JSPatch */ = {
 			isa = PBXGroup;
 			children = (
@@ -195,9 +216,11 @@
 				DFBFC4471CEEFCC900672995 /* ALJSPatchDownloadFile.m */,
 				DFBFC4481CEEFCC900672995 /* ALJSPatchFile.h */,
 				DFBFC4491CEEFCC900672995 /* ALJSPatchFile.m */,
+				DFB5A33B1CF6914900364B21 /* NSString+ALMD5.h */,
+				DFB5A33C1CF6914900364B21 /* NSString+ALMD5.m */,
 				DFBFC4801CF2B7D000672995 /* NSData+Base64.h */,
 				DFBFC47F1CF2B7D000672995 /* NSData+Base64.m */,
-				DFBFC47A1CF2B6FD00672995 /* debugFile */,
+				DFB5A3421CF698A500364B21 /* debugFile */,
 				DFBFC4641CEEFE0800672995 /* RSA */,
 			);
 			path = JSPatch;
@@ -233,16 +256,6 @@
 				DFBFC46D1CEEFE0800672995 /* rsaCertReq.csr */,
 			);
 			path = Java;
-			sourceTree = "<group>";
-		};
-		DFBFC47A1CF2B6FD00672995 /* debugFile */ = {
-			isa = PBXGroup;
-			children = (
-				DFBFC4821CF2F1B700672995 /* JSPatch说明文档.pages */,
-				DFBFC47B1CF2B6FD00672995 /* fixBug.js */,
-				DFBFC47C1CF2B6FD00672995 /* version.js */,
-			);
-			path = debugFile;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -332,12 +345,12 @@
 				DFBFC4731CEEFE0800672995 /* private_key.pem in Resources */,
 				DFBFC4711CEEFE0800672995 /* public_key.der in Resources */,
 				DFBFC4751CEEFE0800672995 /* rsaCert.crt in Resources */,
+				DFB5A3491CF698A500364B21 /* version.js in Resources */,
 				DF6E6A6E1BCF788900F4D086 /* LaunchScreen.xib in Resources */,
 				DFBFC4761CEEFE0800672995 /* rsaCertReq.csr in Resources */,
-				DFBFC47D1CF2B6FD00672995 /* fixBug.js in Resources */,
-				DFBFC4831CF2F1B700672995 /* JSPatch说明文档.pages in Resources */,
-				DFBFC47E1CF2B6FE00672995 /* version.js in Resources */,
+				DFB5A3471CF698A500364B21 /* fixBug.js in Resources */,
 				DFBFC4701CEEFE0800672995 /* private_key.p12 in Resources */,
+				DFB5A3481CF698A500364B21 /* JSPatch说明文档.pages in Resources */,
 				DFBFC4741CEEFE0800672995 /* rsa_public_key.pem in Resources */,
 				DFBFC4721CEEFE0800672995 /* pkcs8_private_key.pem in Resources */,
 				DF6E6A6B1BCF788900F4D086 /* Images.xcassets in Resources */,
@@ -407,6 +420,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF6E6A661BCF788900F4D086 /* ViewController.m in Sources */,
+				DFB5A33D1CF6914900364B21 /* NSString+ALMD5.m in Sources */,
 				DFBFC4561CEEFCC900672995 /* ALFileManager.m in Sources */,
 				DF6E6A631BCF788900F4D086 /* AppDelegate.m in Sources */,
 				DFBFC4581CEEFCC900672995 /* ALJSPatchFile.m in Sources */,

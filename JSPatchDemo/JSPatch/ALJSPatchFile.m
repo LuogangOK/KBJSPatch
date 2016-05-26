@@ -10,7 +10,9 @@
 #import "ALJSPatchDownloadFile.h"
 #import "RSAEncryptor.h"
 #import "ALFileManager.h"
+#import "NSString+ALMD5.h"
 #import <JSPatch/JPEngine.h>
+#import "NSString+ALMD5.h"
 
 FOUNDATION_EXTERN NSString * ALJSPatchExecuteMinVersion(void);
 FOUNDATION_EXTERN NSString * ALJSPatchExecuteMaxVersion(void);
@@ -31,7 +33,7 @@ FOUNDATION_EXTERN NSInteger valueWithString(NSString *str);
 #define RSA_HANDING_SEPERATE @"(_RSA_HANDING_SEPERATE_)" //RSA分段加解密的分隔符.
 #define JSPATCH_FIX_BUG_VERSION [[[NSBundle mainBundle] infoDictionary] valueForKey:@"CFBundleShortVersionString"]
 //#define JSPATCH_FIX_BUG_VERSION @"2.2.1" //制定到某一个版本进行该版本的bug修复.
-#define JSPATCH_TEST_MODEL 1 //1为测试模式 线上的请更改为0.
+#define JSPATCH_TEST_MODEL 0 //1为测试模式 线上的请更改为0.
 
 @implementation ALJSPatchFile
 
@@ -54,22 +56,12 @@ NSInteger IntegerValueWithString(NSString *str) {
 }
 
 //默认是不执行.所以最低版本和最高版本都是0.;
-+ (NSString *)maxVersion {
-    
-    return @"0";
-}
++ (NSString *)maxVersion {return @"0";}
++ (NSString *)minVersion {return @"0";}
++ (NSString *)fixBugModifyTime {return @"0";}
++ (NSString *)encryptMD5String {return @"0";}
 
-+ (NSString *)minVersion {
-    
-    return @"0";
-}
-
-+ (NSString *)fixBugModifyTime {
-    
-    return @"0";
-}
-
-+ (void)executeJSPatch:(NSString *)secretCode {
++ (void)executeJSPatch {
     
     [self modifyVersionTimeInterval];
     
@@ -80,49 +72,70 @@ NSInteger IntegerValueWithString(NSString *str) {
         [self doTestJS];
         return;
     }
+        
+    [self beginExecuteJSPatch:YES];
+    //当前版本号.
+    NSInteger currentVersion = IntegerValueWithString(JSPATCH_FIX_BUG_VERSION);
+    //获取plist文件的目录.
+    __block NSString *plistPath = [[ALFileManager cacheWithComponent:JSPATCH_COMPONENT] stringByAppendingPathComponent:@"record.plist"];
     
-    //如果符合secretCode协议,才进入执行JS文件.
-    if ([secretCode isEqualToString:@"13243"]) {
+    __block NSMutableDictionary *modifyData = [[NSDictionary dictionaryWithContentsOfFile:plistPath] mutableCopy];
+    
+    if (!modifyData) {
         
-        [self beginExecuteJSPatch:YES];
-        //当前版本号.
-        NSInteger currentVersion = IntegerValueWithString(JSPATCH_FIX_BUG_VERSION);
-        //获取plist文件的目录.
-        __block NSString *plistPath = [[ALFileManager cacheWithComponent:JSPATCH_COMPONENT] stringByAppendingPathComponent:@"record.plist"];
-        
-        __block NSMutableDictionary *modifyData = [[NSDictionary dictionaryWithContentsOfFile:plistPath] mutableCopy];
-        
-        if (!modifyData) {
+        if ([ALFileManager createFileAtPath:plistPath] == ALCreateFileSuccessed) {
             
-            if ([ALFileManager createFileAtPath:plistPath] == ALCreateFileSuccessed) {
-                
-                modifyData = [[NSDictionary dictionary] mutableCopy];
-            }
+            modifyData = [[NSDictionary dictionary] mutableCopy];
         }
-        
-        //执行version.js.
-        [ALJSPatchFile executeJSPatchWithPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/version.js",JSPATCH_COMPONENT]] fixBugJS:NO];
-        //获取最新的bug.js的修改时间.
-        NSString *bugModifyTime = [ALJSPatchFile fixBugModifyTime];
-        @synchronized([self class]) {
-            //存储最新的fixbug.js的修改时间.
-            [modifyData setObject:[NSString stringWithFormat:@"%ld",bugModifyTime.integerValue] forKey:BUG_MODIFY_TIME];
-            [modifyData writeToFile:plistPath atomically:NO];
-        }
-        //下载最新的version.js文件.
+    }
+    
+    //执行version.js.
+    [ALJSPatchFile executeJSPatchWithPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/version.js",JSPATCH_COMPONENT]] fixBugJS:NO];
+    //获取最新的bug.js的修改时间.
+    NSString *bugModifyTime = [ALJSPatchFile fixBugModifyTime];
+    @synchronized([self class]) {
+        //存储最新的fixbug.js的修改时间.
+        [modifyData setObject:[NSString stringWithFormat:@"%ld",bugModifyTime.integerValue] forKey:BUG_MODIFY_TIME];
+        [modifyData writeToFile:plistPath atomically:NO];
+    }
+    //下载最新的version.js文件.
+    //这里使用的七牛的公有https免费仓库,请去七牛上配置自己的下载地址.
+    [ALJSPatchDownloadFile downloadUrl:[NSURL URLWithString:@"https://dn-anine.qbox.me/version.js"]
+                     cacheURLComponent:JSPATCH_COMPONENT
+                       completionBlock:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+                           
+                           if (error) {
+                               
+                               NSLog(@"downLoadFileError:%@",error.description);
+                               [ALFileManager removePath:[filePath path]];
+                           }else {
+                               @synchronized([self class]) {
+                                   //下载完成,存储fixBug.js的下载时间.
+                                   [modifyData setObject:[NSString stringWithFormat:@"%ld",(NSInteger)([NSDate timeIntervalSinceReferenceDate])] forKey:VERSION_DOWNLOAD_TIME];
+                                   [modifyData writeToFile:plistPath atomically:YES];
+                               }
+                           }
+                           /*
+                            *这里可能存在一个bug,异步线程下载version.js可能会比bug.js慢.
+                            *这种情况下,执行JSPatch并没有真正的结束,处理的成本较高且可能无意义,暂不处理此情况.
+                            */
+                           [self beginExecuteJSPatch:NO];
+                       }];
+    
+    void (^downloadBugJSBlock) (void) = ^(void) {
         //这里使用的七牛的公有https免费仓库,请去七牛上配置自己的下载地址.
-        [ALJSPatchDownloadFile downloadUrl:[NSURL URLWithString:@"https://dn-anine.qbox.me/version.js"]
+        [ALJSPatchDownloadFile downloadUrl:[NSURL URLWithString:@"https://dn-anine.qbox.me/fixBug.js"]
                          cacheURLComponent:JSPATCH_COMPONENT
                            completionBlock:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
                                
                                if (error) {
                                    
                                    NSLog(@"downLoadFileError:%@",error.description);
-                                   [ALFileManager removePath:[filePath path]];
+                                   [ALFileManager removePath:filePath.absoluteString];
                                }else {
                                    @synchronized([self class]) {
                                        //下载完成,存储fixBug.js的下载时间.
-                                       [modifyData setObject:[NSString stringWithFormat:@"%ld",(NSInteger)([NSDate timeIntervalSinceReferenceDate])] forKey:VERSION_DOWNLOAD_TIME];
+                                       [modifyData setObject:[NSString stringWithFormat:@"%ld",(NSInteger)([NSDate timeIntervalSinceReferenceDate])] forKey:BUG_DOWNLOAD_TIME];
                                        [modifyData writeToFile:plistPath atomically:YES];
                                    }
                                }
@@ -132,65 +145,40 @@ NSInteger IntegerValueWithString(NSString *str) {
                                 */
                                [self beginExecuteJSPatch:NO];
                            }];
+    };
+    
+    /*
+     * 如果不存在fixBug.js文件则直接进入下载,
+     * 用户在第二次使用时就可以正常使用fixBug.js功能.
+     */
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/fixBug.js",JSPATCH_COMPONENT]]]) {
         
-        void (^downloadBugJSBlock) (void) = ^(void) {
-            //这里使用的七牛的公有https免费仓库,请去七牛上配置自己的下载地址.
-            [ALJSPatchDownloadFile downloadUrl:[NSURL URLWithString:@"https://dn-anine.qbox.me/fixBug.js"]
-                             cacheURLComponent:JSPATCH_COMPONENT
-                               completionBlock:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-                                   
-                                   if (error) {
-                                       
-                                       NSLog(@"downLoadFileError:%@",error.description);
-                                       [ALFileManager removePath:filePath.absoluteString];
-                                   }else {
-                                       @synchronized([self class]) {
-                                           //下载完成,存储fixBug.js的下载时间.
-                                           [modifyData setObject:[NSString stringWithFormat:@"%ld",(NSInteger)([NSDate timeIntervalSinceReferenceDate])] forKey:BUG_DOWNLOAD_TIME];
-                                           [modifyData writeToFile:plistPath atomically:YES];
-                                       }
-                                   }
-                                   /*
-                                    *这里可能存在一个bug,异步线程下载version.js可能会比bug.js慢.
-                                    *这种情况下,执行JSPatch并没有真正的结束,处理的成本较高且可能无意义,暂不处理此情况.
-                                    */
-                                   [self beginExecuteJSPatch:NO];
-                               }];
-        };
+        downloadBugJSBlock();
         
-        /*
-         * 如果不存在fixBug.js文件则直接进入下载,
-         * 用户在第二次使用时就可以正常使用fixBug.js功能.
-         */
-        if (![[NSFileManager defaultManager] fileExistsAtPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/fixBug.js",JSPATCH_COMPONENT]]]) {
+    }else {
+        
+        NSInteger minVersion = IntegerValueWithString(ALJSPatchExecuteMinVersion());
+        NSInteger maxVersion = IntegerValueWithString(ALJSPatchExecuteMaxVersion());
+        //如果当前App的版本 在fixBug.js制定的版本范围之内,则继续执行...
+        if (currentVersion >= minVersion && currentVersion <= maxVersion) {
+            //首先执行fixBug.js文件
+            [ALJSPatchFile executeJSPatchWithPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/fixBug.js",JSPATCH_COMPONENT]] fixBugJS:YES];
+            //走到这说明,fixBug.js文件执行成功,这里是检测是否需要去更新fixBug.js文件.
+            NSTimeInterval bugDownloadTime = [modifyData[BUG_DOWNLOAD_TIME] integerValue];
+            NSTimeInterval bugModifyTime = [modifyData[BUG_MODIFY_TIME] integerValue];
             
-            downloadBugJSBlock();
-            
-        }else {
-            
-            NSInteger minVersion = IntegerValueWithString(ALJSPatchExecuteMinVersion());
-            NSInteger maxVersion = IntegerValueWithString(ALJSPatchExecuteMaxVersion());
-            //如果当前App的版本 在fixBug.js制定的版本范围之内,则继续执行...
-            if (currentVersion >= minVersion && currentVersion <= maxVersion) {
-                //首先执行fixBug.js文件
-                [ALJSPatchFile executeJSPatchWithPath:[cachePath() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/fixBug.js",JSPATCH_COMPONENT]] fixBugJS:YES];
-                //走到这说明,fixBug.js文件执行成功,这里是检测是否需要去更新fixBug.js文件.
-                NSTimeInterval bugDownloadTime = [modifyData[BUG_DOWNLOAD_TIME] integerValue];
-                NSTimeInterval bugModifyTime = [modifyData[BUG_MODIFY_TIME] integerValue];
+            //如果 js文件的下载时间 小于 js文件的修改时间....说明 js文件已经被更新,应该下载.
+            if (bugDownloadTime <= bugModifyTime) {
+                //进入下载.
+                downloadBugJSBlock();
                 
-                //如果 js文件的下载时间 小于 js文件的修改时间....说明 js文件已经被更新,应该下载.
-                if (bugDownloadTime <= bugModifyTime) {
-                    //进入下载.
-                    downloadBugJSBlock();
-                    
-                }else {
-                    
-                    [self beginExecuteJSPatch:NO];
-                }
             }else {
                 
                 [self beginExecuteJSPatch:NO];
             }
+        }else {
+            
+            [self beginExecuteJSPatch:NO];
         }
     }
 }
@@ -207,6 +195,12 @@ NSInteger IntegerValueWithString(NSString *str) {
         
         NSString *script = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
         
+        //如果是bug.js脚本,首先比对md5值,如果加密脚本的md5值跟服务器下发的md5一致,则说明该脚本是安全脚本.
+        if (isFixBugJS && [[self encryptMD5String] isEqualToString:[NSString md5HexDigest:script]]) {
+            //如果对较不成功,则不执行该脚本.
+            return fileExist;
+        }
+        
         NSArray *decrys = [script componentsSeparatedByString:RSA_HANDING_SEPERATE];
         NSString *decrypt = @"";
         for (NSString *decry in decrys) {
@@ -219,6 +213,7 @@ NSInteger IntegerValueWithString(NSString *str) {
         
         if (decrypt && [decrypt isKindOfClass:[NSString class]]) {
             
+            //使用try catch可以保证执行script的过程中不crash.
             @try {
                 //执行响应版本的脚本.
                 if (isFixBugJS) {
@@ -235,8 +230,6 @@ NSInteger IntegerValueWithString(NSString *str) {
             @finally {
                 
             }
-            
-            
         }
     }
     
@@ -246,15 +239,6 @@ NSInteger IntegerValueWithString(NSString *str) {
 + (void)modifyVersionTimeInterval {
     
     NSLog(@"JSPatch最新时间: %lf",[NSDate timeIntervalSinceReferenceDate]);
-    NSString *bugPath = [[NSBundle mainBundle] pathForResource:@"fixBug" ofType:@"js"];
-    NSString *bugScript = [NSString stringWithContentsOfFile:bugPath encoding:NSUTF8StringEncoding error:nil];
-    bugScript = [bugScript stringByAppendingString:@"append_string"];
-    bugPath = [bugPath stringByReplacingOccurrencesOfString:@".js" withString:@"1.js"];
-    NSError *error;
-    if (![bugScript writeToFile:bugPath atomically:NO encoding:NSUTF8StringEncoding error:&error] || error) {
-        
-        NSLog(@"error:%@",error.description);
-    }
 }
 
 /*
@@ -300,19 +284,103 @@ NSInteger IntegerValueWithString(NSString *str) {
 + (void)doTestJS {
     
     [JPEngine startEngine];
-    
+    //执行bug.js
     NSString *bugPath = [[NSBundle mainBundle] pathForResource:@"fixBug" ofType:@"js"];
     NSString *bugScript = [NSString stringWithContentsOfFile:bugPath encoding:NSUTF8StringEncoding error:nil];
     [JPEngine evaluateScript:[ALJSPatchFile parseScript:bugScript fromVersion:JSPATCH_FIX_BUG_VERSION]];
-    
+    //执行version.js
     NSString *versionPath = [[NSBundle mainBundle] pathForResource:@"version" ofType:@"js"];
     NSString *versionScript = [NSString stringWithContentsOfFile:versionPath encoding:NSUTF8StringEncoding error:nil];
     [JPEngine evaluateScript:versionScript];
     
-    [ALJSPatchFile handleEncryFile:@"version.js"];
-    //处理加密文件.
-    [ALJSPatchFile handleEncryFile:@"fixBug.js"];
     
+    
+    //将fixBug.js文件加密.
+    NSString *bugEncryString = [ALJSPatchFile handleEncryScript:bugScript name:@"fixBug.js"];
+    
+    //获取bug.js加密后的md5值.
+    NSString *bugEncryMD5String = [NSString md5HexDigest:bugEncryString];
+    
+    //获取当前时间.
+    NSTimeInterval currentInterval = [NSDate timeIntervalSinceReferenceDate];
+    
+    //重新拼凑version.js. 修改bugModifyTime的值,添加md5值.
+    versionScript = [[versionScript componentsSeparatedByString:@"_$_SEPERATE_LINE_$_"] firstObject];
+    NSString *appendString = [NSString stringWithFormat:@"\
+                                                        fixBugModifyTime : function() {\
+                                                            \
+                                                            return '%@';\
+                                                        },\
+                                                          encryptMD5String : function() {\
+                                                            return '%@';\
+                                                        }\
+                                                    });",[NSString stringWithFormat:@"%f",currentInterval],bugEncryMD5String];
+    versionScript = [versionScript stringByAppendingString:appendString];
+    //将重组的version.js加密
+    [ALJSPatchFile handleEncryScript:versionScript name:@"version.js"];
+}
+
+//将指定文件加密.
++ (NSString *)handleEncryScript:(NSString *)bugScript name:(NSString *)name {
+    
+    NSString *encryString = [self segeEncryptScript:bugScript];
+    
+    NSString *encryptFilePath = [[ALFileManager cacheWithComponent:JSPATCH_COMPONENT] stringByAppendingPathComponent:name];
+    if ([encryString writeToFile:encryptFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil]) {
+        
+        NSLog(@"%@加密文件已保存至:%@",name,encryptFilePath);
+        [self segeParseEncryptStringWithPath:encryptFilePath];
+    }
+    
+    return encryString;
+}
+
+//分段加密制定字符串.
++ (NSString *)segeEncryptScript:(NSString *)script {
+    
+    NSInteger index = 0;
+    NSString *encryString =@"";
+    while (index <= script.length) {
+        
+        NSInteger step = RSA_HANDING_STEP_LENGTH;
+        if(script.length - index <= RSA_HANDING_STEP_LENGTH) {
+            
+            step = script.length - index;
+        }
+        
+        if (step == 0) {
+            
+            break;
+        }
+        NSString *tempStr = [script substringWithRange:NSMakeRange(index, step)];
+        tempStr = [ALJSPatchFile encrypt:tempStr];
+        encryString = [encryString stringByAppendingString:[NSString stringWithFormat:@"%@%@",RSA_HANDING_SEPERATE,tempStr]];
+        
+        index += step;
+    }
+    
+    return encryString;
+}
+
+//解析指定路径下的分段加密字符串.
++ (NSString *)segeParseEncryptStringWithPath:(NSString *)encryptFilePath {
+    
+        NSString *decrypt = @"";
+        NSString *encryString = [NSString stringWithContentsOfFile:encryptFilePath encoding:NSUTF8StringEncoding error:nil];
+        if (encryString) {
+            
+            NSArray *decrys = [encryString componentsSeparatedByString:RSA_HANDING_SEPERATE];
+
+            for (NSString *decry in decrys) {
+                
+                if (decry && [decry isKindOfClass:[NSString class]] && decry.length) {
+                    
+                    decrypt = [decrypt stringByAppendingString:[ALJSPatchFile decrypt:decry]];
+                }
+            }
+            NSLog(@"解出来的结果是：%@",decrypt);
+        }
+    return decrypt;
 }
 
 //获取某个版本的脚本信息.
@@ -330,60 +398,9 @@ NSInteger IntegerValueWithString(NSString *str) {
     return resultScript;
 }
 
-+ (void)handleEncryFile:(NSString *)name {
-    
-    NSString *bugPath = [[NSBundle mainBundle] pathForResource:[[name componentsSeparatedByString:@"."] firstObject] ofType:@"js"];
-    NSString *bugScript = [NSString stringWithContentsOfFile:bugPath encoding:NSUTF8StringEncoding error:nil];
-    
-    NSInteger index = 0;
-    NSString *encryString =@"";
-    while (index <= bugScript.length) {
-        
-        NSInteger step = RSA_HANDING_STEP_LENGTH;
-        if(bugScript.length - index <= RSA_HANDING_STEP_LENGTH) {
-            
-            step = bugScript.length - index;
-        }
-        
-        if (step == 0) {
-            
-            break;
-        }
-        NSString *tempStr = [bugScript substringWithRange:NSMakeRange(index, step)];
-        tempStr = [ALJSPatchFile encrypt:tempStr];
-        encryString = [encryString stringByAppendingString:[NSString stringWithFormat:@"%@%@",RSA_HANDING_SEPERATE,tempStr]];
-        
-        index += step;
-    }
-    
-    NSString *encryptFilePath = [[ALFileManager cacheWithComponent:JSPATCH_COMPONENT] stringByAppendingPathComponent:name];
-    if ([encryString writeToFile:encryptFilePath atomically:YES encoding:NSStringEncodingConversionAllowLossy error:nil]) {
-        
-        //取加密文件
-        NSLog(@"%@加密文件已保存至:%@",name,encryptFilePath);
-        NSString *encryString = [NSString stringWithContentsOfFile:encryptFilePath encoding:NSStringEncodingConversionAllowLossy error:nil];
-        if (encryString) {
-            
-            printf("解文件。。。。。\n\n");
-            
-            NSArray *decrys = [encryString componentsSeparatedByString:RSA_HANDING_SEPERATE];
-            NSString *decrypt = @"";
-            for (NSString *decry in decrys) {
-                
-                if (decry && [decry isKindOfClass:[NSString class]] && decry.length) {
-                    
-                    decrypt = [decrypt stringByAppendingString:[ALJSPatchFile decrypt:decry]];
-                }
-            }
-            
-            NSLog(@"解出来的结果是：%@",decrypt);
-        }
-    }
-}
-
-
-
-
+/*
+ *RSA加密
+ */
 + (NSString *)encrypt:(NSString *)string {
     
     RSAEncryptor* rsaEncryptor = [[RSAEncryptor alloc] init];
@@ -397,6 +414,9 @@ NSInteger IntegerValueWithString(NSString *str) {
     return restrinBASE64STRING;
 }
 
+/*
+ *RSA解密
+ */
 + (NSString *)decrypt:(NSString *)string {
     
     RSAEncryptor* rsaEncryptor = [[RSAEncryptor alloc] init];
