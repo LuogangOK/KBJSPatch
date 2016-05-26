@@ -194,17 +194,9 @@
 			children = (
 				DFB5A3431CF698A500364B21 /* fixBug.js */,
 				DFB5A3441CF698A500364B21 /* JSPatch说明文档.pages */,
-				DFB5A3451CF698A500364B21 /* uploadFile */,
 				DFB5A3461CF698A500364B21 /* version.js */,
 			);
 			path = debugFile;
-			sourceTree = "<group>";
-		};
-		DFB5A3451CF698A500364B21 /* uploadFile */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = uploadFile;
 			sourceTree = "<group>";
 		};
 		DFBFC4431CEEFCC900672995 /* JSPatch */ = {
